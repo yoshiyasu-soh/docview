@@ -4,3 +4,11 @@ Thumbs.db
 # Claude Code のローカル設定・ドキュメント（開発環境固有のため非公開）
 .claude/
 CLAUDE.md
+
+# Windows アプリ化（pkg / Tauri）はローカル専用（GitHub には反映しない）
+package.json
+package-lock.json
+node_modules/
+dist/
+src-tauri/
+src-tauri-www/
