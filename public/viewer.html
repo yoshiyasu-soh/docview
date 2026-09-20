@@ -41,6 +41,38 @@
 <main id="out"><p>読み込み中…</p></main>
 <script src="/static/vendor/marked.min.js"></script>
 <script>
+  // ローカルの自分のドキュメントを表示する前提だが、外部から取り込んだ Markdown が
+  // 混ざる可能性を考え、生 HTML の埋め込みは無害化し、リンク・画像は許可スキームの
+  // allowlist で判定する（denylist は data: 等の見落としが起きやすいため使わない）。
+  var escHtml = function (s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+  var isSafeLinkUrl = function (u) {
+    try {
+      var parsed = new URL(u, window.location.href);
+      return ['http:', 'https:', 'mailto:'].indexOf(parsed.protocol) !== -1;
+    } catch (e) { return false; }
+  };
+  var isSafeImageUrl = function (u) {
+    try {
+      var parsed = new URL(u, window.location.href);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return true;
+      return parsed.protocol === 'data:' && /^data:image\//i.test(u);
+    } catch (e) { return false; }
+  };
+  marked.use({
+    renderer: {
+      html: function (token) { return escHtml(token.text); },
+      link: function (token) {
+        var href = isSafeLinkUrl(token.href) ? token.href : '#';
+        var title = token.title ? ' title="' + escHtml(token.title) + '"' : '';
+        return '<a href="' + escHtml(href) + '"' + title + ' target="_blank" rel="noopener noreferrer">' + this.parser.parseInline(token.tokens) + '</a>';
+      },
+      image: function (token) {
+        var href = isSafeImageUrl(token.href) ? token.href : '';
+        var title = token.title ? ' title="' + escHtml(token.title) + '"' : '';
+        return '<img src="' + escHtml(href) + '" alt="' + escHtml(token.text || '') + '"' + title + '>';
+      }
+    }
+  });
   marked.setOptions({ gfm: true, breaks: false });
   fetch('__SRC__')
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })

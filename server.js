@@ -219,7 +219,16 @@ function sendJson(res, obj) {
 
 const escHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+// DNS rebinding 対策：外部サイトが DNS を 127.0.0.1 に向け直してブラウザに
+// 送らせたリクエストは、Host ヘッダーがこのサーバーの想定値と一致しないため拒否する。
+const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
+
 const server = http.createServer((req, res) => {
+  if (!ALLOWED_HOSTS.has(req.headers.host)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('Forbidden');
+  }
+
   const url = new URL(req.url, 'http://127.0.0.1');
   const p = url.pathname;
 

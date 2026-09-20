@@ -34,7 +34,7 @@ Markdown ファイルを開いたときのビューア画面（[marked](https://
   - `/static/<relpath>`: 許可リストに載っているファイルだけを配信します（現状 `vendor/marked.min.js` のみ）。
 - [public/index.html](public/index.html) — トップページ。バニラ JS（フレームワークなし）でカード一覧・検索・並び替え・フォルダ非表示（localStorage 永続化）・ダイアログでのファイル一覧を実装しています。
 - [public/viewer.html](public/viewer.html) — Markdown ファイル1件を表示するテンプレート。[marked](https://github.com/markedjs/marked) を読み込み、YAML フロントマターを除去してからレンダリングします。
-- [public/vendor/marked.min.js](public/vendor/marked.min.js) — marked の UMD minified ビルドをローカルに同梱したもの（npm install 不要、CDN 不要）。marked は既定で GFM（表・取消線など）に対応し、Markdown 内の生 HTML もそのまま透過します。ローカルの自分のドキュメントを表示する前提のツールのため許容していますが、不特定多数が書いた Markdown を表示する用途には向きません。
+- [public/vendor/marked.min.js](public/vendor/marked.min.js) — marked の UMD minified ビルドをローカルに同梱したもの（npm install 不要、CDN 不要）。marked は既定で GFM（表・取消線など）に対応します。marked は既定で Markdown 内の生 HTML をそのまま透過しますが、[public/viewer.html](public/viewer.html) 側でレンダラーを上書きし、生 HTML の埋め込みと `javascript:` リンクは無害化しています。
 
 ### データフロー
 
