@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>docview</title>
+<style>
+  :root {
+    --bg: #f3f4f6; --card: #ffffff; --ink: #16181d; --sub: #6a6f7a; --line: #dcdde1;
+    --accent: #2b59c3; --on-ink: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131417; --card: #1c1e22; --ink: #ececec; --sub: #9a9ea8; --line: #2f3238; --accent: #8fb0ff; --on-ink: #131417; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 14px/1.6 "BIZ UDPGothic", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header {
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    padding: .9rem 1.5rem; border-bottom: 1px solid var(--line); background: var(--card);
+  }
+  header h1 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+  #stat { color: var(--sub); font-size: .85rem; }
+  .spacer { flex: 1; }
+
+  .seg { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; padding: .35rem 1rem; font-weight: 600; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
+
+  .ghost { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: .3rem .9rem; }
+  .ghost:hover { border-color: var(--ink); }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 1.5rem; }
+  .toolbar { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem; }
+  .search {
+    flex: 1 1 280px; max-width: 460px; padding: .55rem 1rem; border: 1px solid var(--line);
+    border-radius: 999px; background: var(--card); color: var(--ink); font: inherit;
+  }
+  .pill { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: .4rem 1rem; }
+  .pill[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+  .card { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  .card:hover { border-color: var(--ink); }
+  .card-main {
+    display: flex; flex-direction: column; width: 100%; min-height: 168px; padding: 1rem 1.1rem .8rem;
+    background: none; border: 0; text-align: left; border-radius: 12px;
+  }
+  .card h2 { display: flex; align-items: center; gap: .5rem; margin: 0 2rem .5rem 0; font-size: 1rem; }
+  .card h2 span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card svg { flex: none; }
+  .card ul { list-style: none; margin: 0 0 .6rem; padding: 0; color: var(--sub); font-size: .85rem; }
+  .card li { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: .9rem; position: relative; }
+  .card li::before { content: ""; position: absolute; left: .15rem; top: .7em; width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+  .meta { margin-top: auto; display: flex; justify-content: space-between; color: var(--sub); font-size: .78rem; font-variant-numeric: tabular-nums; }
+  .hide {
+    position: absolute; top: .65rem; right: .65rem; border: 1px solid transparent; background: none;
+    border-radius: 6px; padding: .15rem .45rem; font-size: .75rem; color: var(--sub); opacity: 0;
+  }
+  .card:hover .hide, .hide:focus-visible { opacity: 1; }
+  .hide:hover { border-color: var(--line); color: var(--ink); }
+  @media (hover: none) { .hide { opacity: 1; } }
+
+  .empty { padding: 4rem 1rem; text-align: center; color: var(--sub); }
+
+  dialog {
+    width: min(720px, calc(100vw - 2rem)); max-height: min(80vh, 760px); padding: 0;
+    border: 1px solid var(--ink); border-radius: 12px; background: var(--card); color: var(--ink);
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, .35); }
+  .dlg { display: flex; flex-direction: column; max-height: min(80vh, 760px); }
+  .dlg-head { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--line); }
+  .dlg-head h2 { margin: 0; font-size: 1rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dlg-head .search { flex: 0 1 220px; padding: .3rem .8rem; }
+  .dlg-close { border: 0; background: none; font-size: 1.3rem; line-height: 1; padding: .1rem .4rem; }
+  .files { overflow-y: auto; margin: 0; padding: .4rem 0; list-style: none; }
+  .files a { display: block; padding: .55rem 1.1rem; color: inherit; text-decoration: none; }
+  .files a:hover { background: var(--bg); }
+  .f-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .f-sub { display: flex; justify-content: space-between; gap: 1rem; color: var(--sub); font-size: .78rem; }
+  .f-sub span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .f-sub span:last-child { font-variant-numeric: tabular-nums; flex: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>docview</h1>
+  <span id="stat"></span>
+  <span class="spacer"></span>
+  <span id="scanned" class="stat" style="color:var(--sub);font-size:.8rem"></span>
+  <button class="ghost" id="rescan" type="button">再スキャン</button>
+  <div class="seg" role="group" aria-label="表示する種類">
+    <button type="button" data-kind="html" aria-pressed="true">HTML</button>
+    <button type="button" data-kind="md" aria-pressed="false">Markdown</button>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <input id="q" class="search" type="search" placeholder="フォルダ名・ファイル名・タイトルで検索" aria-label="検索">
+    <button class="pill" type="button" data-sort="new" aria-pressed="true">作成日が新しい順</button>
+    <button class="pill" type="button" data-sort="old" aria-pressed="false">作成日が古い順</button>
+    <button class="pill" type="button" id="toggle-hidden" aria-pressed="false">非表示フォルダ (0)</button>
+  </div>
+  <div id="grid" class="grid"></div>
+</main>
+
+<dialog id="dlg"></dialog>
+
+<script>
+(function () {
+  'use strict';
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  var hiddenList = [];
+  try { hiddenList = JSON.parse(store.get('dv.hidden', '[]')); } catch (e) {}
+
+  var state = {
+    items: [], root: '', scannedAt: 0,
+    kind: store.get('dv.kind', 'html') === 'md' ? 'md' : 'html',
+    sort: 'new', q: '', showHidden: false, hidden: new Set(hiddenList)
+  };
+
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  var fmtDate = function (ms) { var d = new Date(ms); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  var fmtTime = function (ms) { var d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
+  var enc = function (rel) { return rel.split('/').map(encodeURIComponent).join('/'); };
+  var urlOf = function (it) { return (it.kind === 'md' ? '/md/' : '/raw/') + enc(it.rel); };
+  var kindLabel = function () { return state.kind === 'md' ? 'Markdown' : 'HTML'; };
+
+  var FOLDER_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.2l2 2.2h8.8A1.5 1.5 0 0 1 21 8.7v9.8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></svg>';
+
+  function buildGroups() {
+    var map = new Map();
+    state.items.forEach(function (it) {
+      if (it.kind !== state.kind) return;
+      if (!map.has(it.folder)) map.set(it.folder, []);
+      map.get(it.folder).push(it);
+    });
+    var q = state.q.trim().toLowerCase();
+    var groups = [];
+    map.forEach(function (files, folder) {
+      var folderHit = !q || folder.toLowerCase().indexOf(q) >= 0;
+      var shown = folderHit ? files : files.filter(function (f) {
+        return f.name.toLowerCase().indexOf(q) >= 0 || f.title.toLowerCase().indexOf(q) >= 0;
+      });
+      shown = shown.slice().sort(function (a, b) { return b.created - a.created; });
+      groups.push({
+        folder: folder, all: files, files: shown, hit: shown.length > 0,
+        date: Math.max.apply(null, files.map(function (f) { return f.created; }))
+      });
+    });
+    return groups;
+  }
+
+  function render() {
+    document.querySelectorAll('[data-kind]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.kind === state.kind)); });
+    document.querySelectorAll('[data-sort]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.sort === state.sort)); });
+
+    var groups = buildGroups();
+    var hiddenCount = groups.filter(function (g) { return state.hidden.has(g.folder); }).length;
+    var total = groups.reduce(function (n, g) { return n + g.all.length; }, 0);
+    $('#stat').textContent = groups.length + ' フォルダ / ' + total + ' 件';
+    var tb = $('#toggle-hidden');
+    tb.textContent = '非表示フォルダ (' + hiddenCount + ')';
+    tb.setAttribute('aria-pressed', String(state.showHidden));
+    $('#scanned').textContent = state.scannedAt ? 'スキャン ' + fmtTime(state.scannedAt) : '';
+
+    var list = groups.filter(function (g) {
+      return g.hit && (state.showHidden ? state.hidden.has(g.folder) : !state.hidden.has(g.folder));
+    });
+    list.sort(function (a, b) { return state.sort === 'new' ? b.date - a.date : a.date - b.date; });
+
+    var grid = $('#grid');
+    if (!list.length) {
+      var msg;
+      if (!groups.length) msg = '<p>' + esc(state.root) + ' 配下に ' + kindLabel() + ' ファイルがありません。</p>';
+      else if (state.q) msg = '<p>「' + esc(state.q) + '」に一致する ' + kindLabel() + ' はありません。</p>';
+      else if (state.showHidden) msg = '<p>非表示にしたフォルダはありません。</p>';
+      else msg = '<p>すべてのフォルダを非表示にしています。「非表示フォルダ」から戻せます。</p>';
+      grid.innerHTML = '<div class="empty" style="grid-column:1/-1">' + msg + '</div>';
+      return;
+    }
+    grid.innerHTML = list.map(function (g) {
+      var bullets = g.files.slice(0, 3).map(function (f) { return '<li title="' + esc(f.title) + '">' + esc(f.title) + '</li>'; }).join('');
+      return '<div class="card">' +
+        '<button type="button" class="card-main" data-open="' + esc(g.folder) + '">' +
+        '<h2>' + FOLDER_ICON + '<span>' + esc(g.folder) + '</span></h2>' +
+        '<ul>' + bullets + '</ul>' +
+        '<div class="meta"><span>' + g.files.length + ' 件</span><span>' + fmtDate(g.date) + '</span></div>' +
+        '</button>' +
+        '<button type="button" class="hide" data-hide="' + esc(g.folder) + '">' + (state.showHidden ? '戻す' : '非表示') + '</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function openFolder(folder) {
+    var files = state.items.filter(function (i) { return i.kind === state.kind && i.folder === folder; })
+      .sort(function (a, b) { return b.created - a.created; });
+    var dlg = $('#dlg');
+    dlg.innerHTML = '<div class="dlg"><div class="dlg-head"><h2>' + esc(folder) + ' <span style="color:var(--sub);font-weight:400">' + files.length + ' 件</span></h2>' +
+      '<input class="search" id="dq" type="search" placeholder="このフォルダ内を絞り込み" aria-label="このフォルダ内を絞り込み">' +
+      '<button class="dlg-close" type="button" aria-label="閉じる" data-close>×</button></div>' +
+      '<ul class="files" id="files"></ul></div>';
+    function draw(q) {
+      q = q.trim().toLowerCase();
+      var rows = files.filter(function (f) { return !q || f.title.toLowerCase().indexOf(q) >= 0 || f.rel.toLowerCase().indexOf(q) >= 0; });
+      $('#files').innerHTML = rows.length ? rows.map(function (f) {
+        return '<li><a href="' + urlOf(f) + '" target="_blank" rel="noopener"><div class="f-title">' + esc(f.title) + '</div>' +
+          '<div class="f-sub"><span>' + esc(f.rel) + '</span><span>' + fmtDate(f.created) + '</span></div></a></li>';
+      }).join('') : '<li class="empty">一致するファイルはありません。</li>';
+    }
+    draw('');
+    $('#dq').addEventListener('input', function (e) { draw(e.target.value); });
+    dlg.showModal();
+  }
+
+  function saveHidden() { store.set('dv.hidden', JSON.stringify(Array.from(state.hidden))); }
+
+  function load(url, opts) {
+    return fetch(url, opts).then(function (r) { return r.json(); }).then(function (d) {
+      state.items = d.items; state.root = d.root; state.scannedAt = d.scannedAt; render();
+    }).catch(function () {
+      $('#grid').innerHTML = '<div class="empty" style="grid-column:1/-1"><p>サーバーに接続できません。起動しているか確認してください。</p></div>';
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button, dialog');
+    if (!t) return;
+    if (t.dataset && t.dataset.kind) { state.kind = t.dataset.kind; store.set('dv.kind', state.kind); state.showHidden = false; render(); }
+    else if (t.dataset && t.dataset.sort) { state.sort = t.dataset.sort; render(); }
+    else if (t.id === 'toggle-hidden') { state.showHidden = !state.showHidden; render(); }
+    else if (t.id === 'rescan') { t.disabled = true; load('/api/rescan', { method: 'POST' }).then(function () { t.disabled = false; }); }
+    else if (t.dataset && t.dataset.open) { openFolder(t.dataset.open); }
+    else if (t.dataset && t.dataset.hide) {
+      var f = t.dataset.hide;
+      if (state.hidden.has(f)) state.hidden.delete(f); else state.hidden.add(f);
+      saveHidden(); render();
+    }
+    else if (t.dataset && 'close' in t.dataset) { $('#dlg').close(); }
+    else if (t.id === 'dlg' && e.target === t) { t.close(); } // 背景クリック
+  });
+  $('#q').addEventListener('input', function (e) { state.q = e.target.value; render(); });
+
+  load('/api/items');
+})();
+</script>
+</body>
+</html>

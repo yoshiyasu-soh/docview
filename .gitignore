@@ -1,0 +1,6 @@
+.DS_Store
+Thumbs.db
+
+# Claude Code のローカル設定・ドキュメント（開発環境固有のため非公開）
+.claude/
+CLAUDE.md

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="__BASE__">
+<title>__NAME__</title>
+<style>
+  :root {
+    --bg: #fbfbfa; --ink: #1c1c1c; --sub: #6b6b6b; --line: #e3e3e0; --code-bg: #f0f0ed; --link: #2b59c3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #17181a; --ink: #e8e8e6; --sub: #9a9a97; --line: #303236; --code-bg: #24262a; --link: #8fb0ff; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.85 "BIZ UDPGothic", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  }
+  main { max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.25rem 6rem; }
+  h1, h2, h3, h4 { line-height: 1.4; margin: 2.2em 0 .6em; }
+  h1 { font-size: 1.9rem; margin-top: 0; padding-bottom: .4em; border-bottom: 2px solid var(--ink); }
+  h2 { font-size: 1.4rem; padding-left: .6em; border-left: 5px solid var(--ink); }
+  h3 { font-size: 1.15rem; }
+  a { color: var(--link); }
+  p { margin: 0 0 1.1em; }
+  code { font: .88em/1.5 "Cascadia Mono", Consolas, monospace; background: var(--code-bg); padding: .12em .4em; border-radius: 4px; }
+  pre { background: var(--code-bg); padding: 1em 1.2em; border-radius: 6px; overflow-x: auto; line-height: 1.6; }
+  pre code { background: none; padding: 0; }
+  blockquote { margin: 0 0 1.1em; padding: .1em 1em; border-left: 3px solid var(--line); color: var(--sub); }
+  img { max-width: 100%; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+  ul, ol { padding-left: 1.6em; margin: 0 0 1.1em; }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin-bottom: 1.2em; }
+  th, td { border: 1px solid var(--line); padding: .45em .8em; }
+  th { background: var(--code-bg); }
+  #err { color: #c0392b; }
+</style>
+</head>
+<body>
+<main id="out"><p>読み込み中…</p></main>
+<script src="/static/vendor/marked.min.js"></script>
+<script>
+  marked.setOptions({ gfm: true, breaks: false });
+  fetch('__SRC__')
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (t) {
+      t = t.replace(/^﻿/, '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
+      document.getElementById('out').innerHTML = marked.parse(t);
+    })
+    .catch(function (e) { document.getElementById('out').innerHTML = '<p id="err">読み込めませんでした: ' + e.message + '</p>'; });
+</script>
+</body>
+</html>
